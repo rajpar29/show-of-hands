@@ -3,8 +3,9 @@ package com.rhapps.show_of_hands.showofhands.model;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-@Document
+@Document(collection = "users")
 public class Users{
 
     @Id
@@ -43,10 +44,10 @@ public class Users{
         this.password = password;
     }
 
-    public Users(ObjectId _id, String username, String password) {
-        this._id = _id;
+    public Users(String username, String password) {
         this.username = username;
-        this.password = password;
+        this.password = new BCryptPasswordEncoder().encode(password);
+        ;
     }
 
 
