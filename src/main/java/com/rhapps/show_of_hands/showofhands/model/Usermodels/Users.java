@@ -1,4 +1,4 @@
-package com.rhapps.show_of_hands.showofhands.model;
+package com.rhapps.show_of_hands.showofhands.model.Usermodels;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;

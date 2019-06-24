@@ -1,28 +1,29 @@
 package com.rhapps.show_of_hands.showofhands.resource;
 
 
+import com.mongodb.MongoException;
 import com.rhapps.show_of_hands.showofhands.config.SecurityConfiguration;
-import com.rhapps.show_of_hands.showofhands.model.CustomUserDetails;
-import com.rhapps.show_of_hands.showofhands.model.PollOptions;
-import com.rhapps.show_of_hands.showofhands.model.Polls;
-import com.rhapps.show_of_hands.showofhands.model.Users;
+import com.rhapps.show_of_hands.showofhands.model.PollModels.CommentModel;
+import com.rhapps.show_of_hands.showofhands.model.PollModels.PollOptions;
+import com.rhapps.show_of_hands.showofhands.model.PollModels.Polls;
+import com.rhapps.show_of_hands.showofhands.model.PollModels.UpDownVote;
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.Users;
 import com.rhapps.show_of_hands.showofhands.repository.PollsRepository;
 import com.rhapps.show_of_hands.showofhands.repository.UsersRepository;
+import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/posts")
+@RequestMapping("/polls")
 public class PostResource {
     private PollsRepository pollsRepository;
     private UsersRepository usersRepository;
@@ -43,8 +44,6 @@ public class PostResource {
         String username = SecurityConfiguration.getUser();
         List<PollOptions> options = fetchOptions(optionString);
         List<String> categories = fetchCategories(categoriesString);
-
-
         Polls poll = new Polls(
                 username,
                 findUserId(username),
@@ -54,10 +53,79 @@ public class PostResource {
                 imageUrl,
                 categories
         );
-          pollsRepository.insert(poll);
-        System.out.println();
+        pollsRepository.insert(poll);
     }
 
+    @GetMapping("/allPolls")
+    public List<Polls> getPolls(){
+        return pollsRepository.findAll();
+    }
+
+    @PostMapping("/makeComment/{postId}")
+    public Polls makeComment(@RequestParam("comment") String comment, @PathVariable("postId") String postId) {
+        Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
+        List<CommentModel> oldCommetns = poll.getComments();
+        oldCommetns.add(new CommentModel(comment, SecurityConfiguration.getUser()));
+        poll.setComments(oldCommetns);
+        pollsRepository.save(poll);
+        return poll;
+    }
+
+    @GetMapping("/upvote/{postId}")
+    public Polls upvote(@PathVariable("postId") String postId) {
+        Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
+        return findIfUserUpvotedOrDownvoted(poll, true);
+    }
+
+    @GetMapping("/downvote/{postId}")
+    public Polls downvote(@PathVariable("postId") String postId) {
+        Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
+        return findIfUserUpvotedOrDownvoted(poll, false);
+    }
+
+    public Polls findIfUserUpvotedOrDownvoted(Polls poll, boolean isUpvote) {
+        List<UpDownVote> upDownVotesList = poll.getUpvoteOrDownvotedBy();
+        for (int i = 0; i < upDownVotesList.size(); i++) {
+            if (upDownVotesList.get(i).getUsername().equals(SecurityConfiguration.getUser())) {
+                if (isUpvote) {
+                    if (upDownVotesList.get(i).isUpvoted()) {
+                        poll.setUpvotes(poll.getUpvotes() - 1);
+                        upDownVotesList.remove(i);
+                    } else {
+                        poll.setDownvotes(poll.getDownvotes() - 1);
+                        poll.setUpvotes(poll.getUpvotes() + 1);
+                        upDownVotesList.set(i, new UpDownVote(isUpvote, !isUpvote, SecurityConfiguration.getUser()));
+
+
+                    }
+                } else {
+                    if (upDownVotesList.get(i).isDownvoted()) {
+                        poll.setDownvotes(poll.getDownvotes() - 1);
+                        System.out.println(upDownVotesList.toString());
+                        System.out.println(upDownVotesList.get(i));
+                        upDownVotesList.remove(i);
+                    } else {
+                        poll.setUpvotes(poll.getUpvotes() - 1);
+                        poll.setDownvotes(poll.getDownvotes() + 1);
+                        upDownVotesList.set(i, new UpDownVote(isUpvote, !isUpvote, SecurityConfiguration.getUser()));
+                    }
+                }
+                poll.setUpvoteOrDownvotedBy(upDownVotesList);
+                pollsRepository.save(poll);
+                return poll;
+
+            }
+        }
+        upDownVotesList.add(new UpDownVote(isUpvote, !isUpvote, SecurityConfiguration.getUser()));
+        if (isUpvote) {
+            poll.setUpvotes(poll.getUpvotes() + 1);
+        } else {
+            poll.setDownvotes(poll.getDownvotes() + 1);
+        }
+        poll.setUpvoteOrDownvotedBy(upDownVotesList);
+        pollsRepository.save(poll);
+        return poll;
+    }
 
     private String findUserId(String username) {
         Optional<Users> user = usersRepository.findByUsername(username);
@@ -98,5 +166,7 @@ public class PostResource {
 
 
 }
+
+
 
 

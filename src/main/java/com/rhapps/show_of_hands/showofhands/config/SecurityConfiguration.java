@@ -1,7 +1,7 @@
 package com.rhapps.show_of_hands.showofhands.config;
 
 
-import com.rhapps.show_of_hands.showofhands.model.CustomUserDetails;
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
 import com.rhapps.show_of_hands.showofhands.repository.UsersRepository;
 import com.rhapps.show_of_hands.showofhands.service.CustomUserDetailService;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
 @EnableMongoRepositories(basePackageClasses = UsersRepository.class)
@@ -53,6 +54,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/**/secured/**").authenticated()
                 .anyRequest().permitAll()
                 .and().formLogin().permitAll();
+        http.logout()
+        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
     }
 
     @Bean(name = BeanIds.AUTHENTICATION_MANAGER)

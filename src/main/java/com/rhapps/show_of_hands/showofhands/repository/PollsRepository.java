@@ -1,6 +1,6 @@
 package com.rhapps.show_of_hands.showofhands.repository;
 
-import com.rhapps.show_of_hands.showofhands.model.Polls;
+import com.rhapps.show_of_hands.showofhands.model.PollModels.Polls;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 

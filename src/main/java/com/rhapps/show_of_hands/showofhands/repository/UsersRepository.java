@@ -1,6 +1,6 @@
 package com.rhapps.show_of_hands.showofhands.repository;
 
-import com.rhapps.show_of_hands.showofhands.model.Users;
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.Users;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 

@@ -1,4 +1,4 @@
-package com.rhapps.show_of_hands.showofhands.model;
+package com.rhapps.show_of_hands.showofhands.model.PollModels;
 
 public class PollOptions{
     public String optionName;
