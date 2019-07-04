@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "*", allowCredentials = "true")
 @RestController
 @RequestMapping("/polls")
 public class PostResource {
@@ -65,7 +66,7 @@ public class PostResource {
     public Polls makeComment(@RequestParam("comment") String comment, @PathVariable("postId") String postId) {
         Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
         List<CommentModel> oldCommetns = poll.getComments();
-        oldCommetns.add(new CommentModel(comment, SecurityConfiguration.getUser()));
+        oldCommetns.add(new CommentModel(SecurityConfiguration.getUser(),comment));
         poll.setComments(oldCommetns);
         pollsRepository.save(poll);
         return poll;
@@ -82,6 +83,10 @@ public class PostResource {
         Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
         return findIfUserUpvotedOrDownvoted(poll, false);
     }
+//    @PostMapping("chooseOption/{postId}")
+//    public Polls chooseOption(@PathVariable("postId") String postId){
+//
+//    }
 
     public Polls findIfUserUpvotedOrDownvoted(Polls poll, boolean isUpvote) {
         List<UpDownVote> upDownVotesList = poll.getUpvoteOrDownvotedBy();

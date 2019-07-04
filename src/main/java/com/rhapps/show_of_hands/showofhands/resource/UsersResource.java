@@ -1,5 +1,6 @@
 package com.rhapps.show_of_hands.showofhands.resource;
 
+import com.rhapps.show_of_hands.showofhands.config.SecurityConfiguration;
 import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
 import com.rhapps.show_of_hands.showofhands.model.Usermodels.Users;
 import com.rhapps.show_of_hands.showofhands.repository.UsersRepository;
@@ -9,12 +10,17 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/users")
 public class UsersResource {
@@ -47,7 +53,6 @@ public class UsersResource {
         return findUserId(username);
 
     }
-
     @PostMapping("/userLogin")
     public void userSignIn(@RequestParam("username") String username, @RequestParam("password") String password) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
@@ -56,11 +61,24 @@ public class UsersResource {
         securityContext.setAuthentication(auth);
     }
 
+    @GetMapping("getUserDetail")
+    public Map<String, String> findCurrentUser(){
+        Map<String, String> userDetail = new HashMap<String, String>()
+        {
+            {
+                put("username", SecurityConfiguration.getUser());
+                put("userId", findUserId(SecurityConfiguration.getUser()));
+            }
+        };
+        return  userDetail;
+    }
+
     public String findUserId(String username) {
         Optional<Users> user = usersRepository.findByUsername(username);
         user.orElseThrow(() -> new UsernameNotFoundException("USername not found"));
         return user.map(CustomUserDetails::new).get().get_id().toString();
     }
+
 
 }
 

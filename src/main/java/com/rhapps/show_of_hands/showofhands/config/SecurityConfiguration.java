@@ -19,6 +19,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @EnableMongoRepositories(basePackageClasses = UsersRepository.class)
@@ -54,9 +57,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/**/secured/**").authenticated()
                 .anyRequest().permitAll()
                 .and().formLogin().permitAll();
+        http.cors();
         http.logout()
         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
+
+        http.logout().deleteCookies("JSESSIONID")
+                .and()
+                .rememberMe().key("uniqueAndSecret");
     }
+
+
 
     @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
     @Override

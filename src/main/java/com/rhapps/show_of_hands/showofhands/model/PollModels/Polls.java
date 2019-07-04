@@ -1,5 +1,7 @@
 package com.rhapps.show_of_hands.showofhands.model.PollModels;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -10,6 +12,7 @@ import java.util.List;
 @Document(collection = "posts")
 public class Polls {
     @Id
+    @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId _id;
     private String userId;
     private String title;
