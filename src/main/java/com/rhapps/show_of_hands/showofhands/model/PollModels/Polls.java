@@ -21,12 +21,19 @@ public class Polls {
     private int downvotes ;
     private List<CommentModel> comments = new ArrayList<>();
     private List<PollOptions> options ;
+    private List<PollOptionChoosen> optionChoosen = new ArrayList<>();
     private String imageUrl ;
     private List<String> categories ;
     private String username;
     private List<UpDownVote> upvoteOrDownvotedBy = new ArrayList<>();
 
+    public List<PollOptionChoosen> getOptionChoosen() {
+        return optionChoosen;
+    }
 
+    public void setOptionChoosen(List<PollOptionChoosen> optionChoosen) {
+        this.optionChoosen = optionChoosen;
+    }
     public List<UpDownVote> getUpvoteOrDownvotedBy() {
         return upvoteOrDownvotedBy;
     }

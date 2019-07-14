@@ -3,10 +3,7 @@ package com.rhapps.show_of_hands.showofhands.resource;
 
 import com.mongodb.MongoException;
 import com.rhapps.show_of_hands.showofhands.config.SecurityConfiguration;
-import com.rhapps.show_of_hands.showofhands.model.PollModels.CommentModel;
-import com.rhapps.show_of_hands.showofhands.model.PollModels.PollOptions;
-import com.rhapps.show_of_hands.showofhands.model.PollModels.Polls;
-import com.rhapps.show_of_hands.showofhands.model.PollModels.UpDownVote;
+import com.rhapps.show_of_hands.showofhands.model.PollModels.*;
 import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
 import com.rhapps.show_of_hands.showofhands.model.Usermodels.Users;
 import com.rhapps.show_of_hands.showofhands.repository.PollsRepository;
@@ -22,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@CrossOrigin(origins = "*", allowCredentials = "true")
+@CrossOrigin(origins = "*",allowCredentials = "true")
 @RestController
 @RequestMapping("/polls")
 public class PostResource {
@@ -58,7 +55,7 @@ public class PostResource {
     }
 
     @GetMapping("/allPolls")
-    public List<Polls> getPolls(){
+    public List<Polls> getPolls() {
         return pollsRepository.findAll();
     }
 
@@ -66,7 +63,7 @@ public class PostResource {
     public Polls makeComment(@RequestParam("comment") String comment, @PathVariable("postId") String postId) {
         Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
         List<CommentModel> oldCommetns = poll.getComments();
-        oldCommetns.add(new CommentModel(SecurityConfiguration.getUser(),comment));
+        oldCommetns.add(new CommentModel(SecurityConfiguration.getUser(), comment));
         poll.setComments(oldCommetns);
         pollsRepository.save(poll);
         return poll;
@@ -83,10 +80,47 @@ public class PostResource {
         Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
         return findIfUserUpvotedOrDownvoted(poll, false);
     }
-//    @PostMapping("chooseOption/{postId}")
-//    public Polls chooseOption(@PathVariable("postId") String postId){
-//
-//    }
+
+    @PostMapping("chooseOption/{postId}")
+    public Polls chooseOption(@PathVariable("postId") String postId,
+                              @RequestParam("optionName") String optionName,
+                              @RequestParam("optionid") String optionId){
+        Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
+       return findIfUserAlreadyChooseAnOption(poll, optionName, optionId);
+    }
+
+    public Polls findIfUserAlreadyChooseAnOption(Polls poll, String optionName, String optionId){
+        List<PollOptionChoosen> optionVotedList = poll.getOptionChoosen();
+        String currentUser = SecurityConfiguration.getUser();
+        boolean isValidOption = false;
+
+        for(PollOptions option : poll.getOptions()){
+            if(option.optionName.equals(optionName) && option.optionid.equals(optionId)){
+                isValidOption = true;
+            }
+        }
+        if(!isValidOption){
+            throw new RuntimeException("No Option Available");
+        }
+        for(int i = 0; i<optionVotedList.size(); i++ ){
+            if(optionVotedList.get(i).getUsername().equals(currentUser)){
+                List<PollOptions> pollOptions = poll.getOptions();
+                optionVotedList.get(i).setOptionName(optionName);
+                optionVotedList.get(i).setOptionId(optionId);
+                poll.setOptionChoosen(optionVotedList);
+                pollsRepository.save(poll);
+                return poll;
+            }
+        }
+
+        optionVotedList.add(new PollOptionChoosen(currentUser,optionName,optionId));
+        poll.setOptionChoosen(optionVotedList);
+        pollsRepository.save(poll);
+        return poll;
+
+
+    }
+
 
     public Polls findIfUserUpvotedOrDownvoted(Polls poll, boolean isUpvote) {
         List<UpDownVote> upDownVotesList = poll.getUpvoteOrDownvotedBy();
@@ -144,7 +178,8 @@ public class PostResource {
             JSONObject obj = new JSONObject(optionString);
             JSONArray tempOptions = obj.getJSONArray("options");
             for (int i = 0; i < tempOptions.length(); i++) {
-                tempOptionsList.add(new PollOptions(tempOptions.getString(i), 0));
+                JSONObject optionObj = tempOptions.getJSONObject(i);
+                tempOptionsList.add(new PollOptions(optionObj.get("optionName").toString(),0, optionObj.get("optionId").toString()));
             }
             return tempOptionsList;
         } catch (JSONException e) {

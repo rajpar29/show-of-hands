@@ -44,6 +44,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     }
 
+
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService)
@@ -56,7 +58,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.authorizeRequests()
                 .antMatchers("/**/secured/**").authenticated()
                 .anyRequest().permitAll()
-                .and().formLogin().permitAll();
+                .and().formLogin().loginPage("/userLogin").permitAll();
         http.cors();
         http.logout()
         .logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
@@ -65,6 +67,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .and()
                 .rememberMe().key("uniqueAndSecret");
     }
+
 
 
 
