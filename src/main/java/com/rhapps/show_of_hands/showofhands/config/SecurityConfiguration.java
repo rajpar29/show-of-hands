@@ -1,15 +1,27 @@
 package com.rhapps.show_of_hands.showofhands.config;
 
 
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
 import com.rhapps.show_of_hands.showofhands.repository.UsersRepository;
 import com.rhapps.show_of_hands.showofhands.service.CustomUserDetailService;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @EnableMongoRepositories(basePackageClasses = UsersRepository.class)
@@ -21,13 +33,24 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.userDetailsService = userDetailsService;
     }
 
+    public static String getUser() throws UsernameNotFoundException {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            CustomUserDetails obj = (CustomUserDetails) auth.getPrincipal();
+            return obj.getUsername();
+        } catch (Exception e) {
+            throw new UsernameNotFoundException("user not found");
+        }
+
+    }
+
+
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userDetailsService)
-        .passwordEncoder(getPasswordEncoder());
+                .passwordEncoder(getPasswordEncoder());
     }
-
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -35,21 +58,26 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http.authorizeRequests()
                 .antMatchers("/**/secured/**").authenticated()
                 .anyRequest().permitAll()
-                .and().formLogin().permitAll();
+                .and().formLogin().loginPage("/userLogin").permitAll();
+        http.cors();
+        http.logout()
+        .logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
+
+        http.logout().deleteCookies("JSESSIONID")
+                .and()
+                .rememberMe().key("uniqueAndSecret");
+    }
+
+
+
+
+    @Bean(name = BeanIds.AUTHENTICATION_MANAGER)
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 
     private PasswordEncoder getPasswordEncoder() {
-
-        return new PasswordEncoder() {
-            @Override
-            public String encode(CharSequence charSequence) {
-                return charSequence.toString();
-            }
-
-            @Override
-            public boolean matches(CharSequence charSequence, String s) {
-                return true;
-            }
-        };
+        return new BCryptPasswordEncoder();
     }
 }

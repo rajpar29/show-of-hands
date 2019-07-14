@@ -1,7 +1,7 @@
 package com.rhapps.show_of_hands.showofhands.service;
 
-import com.rhapps.show_of_hands.showofhands.model.CustomUserDetails;
-import com.rhapps.show_of_hands.showofhands.model.Users;
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
+import com.rhapps.show_of_hands.showofhands.model.Usermodels.Users;
 import com.rhapps.show_of_hands.showofhands.repository.UsersRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

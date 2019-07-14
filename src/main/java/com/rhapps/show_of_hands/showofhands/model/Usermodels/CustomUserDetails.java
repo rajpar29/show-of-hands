@@ -1,4 +1,4 @@
-package com.rhapps.show_of_hands.showofhands.model;
+package com.rhapps.show_of_hands.showofhands.model.Usermodels;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
