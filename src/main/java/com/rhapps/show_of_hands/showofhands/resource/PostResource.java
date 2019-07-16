@@ -34,12 +34,14 @@ public class PostResource {
 
 
     @PostMapping("/createPost")
-    public void createPost(@RequestParam("title") String title,
+    public String createPost(@RequestParam("title") String title,
                            @RequestParam("description") String description,
                            @RequestParam("imageUrl") String imageUrl,
                            @RequestParam("options") String optionString,
                            @RequestParam("categories") String categoriesString) {
+        System.out.println("In Create Post");
         String username = SecurityConfiguration.getUser();
+        System.out.println("username: " + username);
         List<PollOptions> options = fetchOptions(optionString);
         List<String> categories = fetchCategories(categoriesString);
         Polls poll = new Polls(
@@ -52,11 +54,17 @@ public class PostResource {
                 categories
         );
         pollsRepository.insert(poll);
+        return "Created Post";
     }
 
     @GetMapping("/allPolls")
     public List<Polls> getPolls() {
         return pollsRepository.findAll();
+    }
+
+    @GetMapping("/pollTest")
+    public String testPoll() {
+        return "Test";
     }
 
     @PostMapping("/makeComment/{postId}")

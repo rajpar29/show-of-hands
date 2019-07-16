@@ -4,13 +4,16 @@ import com.rhapps.show_of_hands.showofhands.config.SecurityConfiguration;
 import com.rhapps.show_of_hands.showofhands.model.Usermodels.CustomUserDetails;
 import com.rhapps.show_of_hands.showofhands.model.Usermodels.Users;
 import com.rhapps.show_of_hands.showofhands.repository.UsersRepository;
+import com.rhapps.show_of_hands.showofhands.security.JwtTokenProvider;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +21,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.rhapps.show_of_hands.showofhands.security.SecurityConstants.TOKEN_PREFIX;
 
 
 @CrossOrigin(origins = "*",allowCredentials = "true")
@@ -27,10 +32,12 @@ public class UsersResource {
 
     private UsersRepository usersRepository;
     private AuthenticationManager authenticationManager;
+    private JwtTokenProvider tokenProvider;
 
-    public UsersResource(UsersRepository usersRepository, AuthenticationManager authenticationManager) {
+    public UsersResource(UsersRepository usersRepository, AuthenticationManager authenticationManager, JwtTokenProvider tokenProvider) {
         this.usersRepository = usersRepository;
         this.authenticationManager = authenticationManager;
+        this.tokenProvider = tokenProvider;
     }
 
     @GetMapping("/allUsers")
@@ -54,11 +61,18 @@ public class UsersResource {
 
     }
     @PostMapping("/userLogin")
-    public void userSignIn(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public ResponseEntity<String> userSignIn(@RequestParam("username") String username, @RequestParam("password") String password) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         Authentication auth = authenticationManager.authenticate(authenticationToken);
         SecurityContext securityContext = SecurityContextHolder.getContext();
         securityContext.setAuthentication(auth);
+        System.out.println("In User Resource USER : " + SecurityConfiguration.getUser());
+        String jwt = tokenProvider.generateToken(auth);
+        System.out.println("In User Resource : " + jwt);
+        System.out.println("In User Resource : is Valid : " + tokenProvider.validateToken(jwt));
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("Authorization", TOKEN_PREFIX +  jwt);
+        return new ResponseEntity<String>("Logged In", responseHeaders, HttpStatus.CREATED);
     }
 
     @GetMapping("getUserDetail")
