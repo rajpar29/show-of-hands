@@ -46,12 +46,14 @@ public class UsersResource {
     }
 
     @PostMapping("/createUser")
-    public UserCreationResult createUser(@RequestParam String username, @RequestParam String password) {
+    public String createUser(@RequestParam String username, @RequestParam String password) {
         try {
             usersRepository.insert(new Users(username, password));
-            return new UserCreationResult("User Created Successfully", true);
+//            return new UserCreationResult("User Created Successfully", true);
+            return "Successfull";
         } catch (DuplicateKeyException e) {
-            return new UserCreationResult("Username already taken", false);
+//            return new UserCreationResult("Username already taken", false);
+            throw new RuntimeException("Username Already Taken");
         }
     }
 
@@ -71,6 +73,11 @@ public class UsersResource {
         System.out.println("In User Resource : " + jwt);
         System.out.println("In User Resource : is Valid : " + tokenProvider.validateToken(jwt));
         HttpHeaders responseHeaders = new HttpHeaders();
+//        responseHeaders.set("Access-Control-Allow-Origin", "*");
+//        responseHeaders.set("Access-Control-Allow-Methods", "POST, PUT, GET, OPTIONS, DELETE");
+//        responseHeaders.set("Access-Control-Max-Age", "3600");
+        responseHeaders.set("Access-Control-Allow-Headers","Authorization");
+        responseHeaders.set("access-control-expose-headers","Authorization");
         responseHeaders.set("Authorization", TOKEN_PREFIX +  jwt);
         return new ResponseEntity<String>("Logged In", responseHeaders, HttpStatus.CREATED);
     }
