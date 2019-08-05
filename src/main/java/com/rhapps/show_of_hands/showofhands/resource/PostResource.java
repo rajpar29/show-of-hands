@@ -12,6 +12,9 @@ import org.bson.types.ObjectId;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,15 +34,32 @@ public class PostResource {
         this.pollsRepository = pollsRepository;
         this.usersRepository = usersRepository;
     }
-
+    @GetMapping("/testGet")
+    public String getTest(){
+        return "get Success";
+    }
+    @PostMapping("/postTest")
+    public String PostTest(){
+        return "Post Success";
+    }
 
     @PostMapping("/createPost")
-    public void createPost(@RequestParam("title") String title,
-                           @RequestParam("description") String description,
-                           @RequestParam("imageUrl") String imageUrl,
-                           @RequestParam("options") String optionString,
-                           @RequestParam("categories") String categoriesString) {
+    public ResponseEntity<String> createPost(@RequestParam("title") String title,
+                                             @RequestParam("description") String description,
+                                             @RequestParam("imageUrl") String imageUrl,
+                                             @RequestParam("options") String optionString,
+                                             @RequestParam("categories") String categoriesString) {
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+//        responseHeaders.set("Access-Control-Allow-Origin", "*");
+//        responseHeaders.set("Access-Control-Allow-Methods", "POST, PUT, GET, OPTIONS, DELETE");
+//        responseHeaders.set("Access-Control-Max-Age", "3600");
+        responseHeaders.set("Access-Control-Allow-Headers","Authorization");
+        responseHeaders.set("access-control-expose-headers","Authorization");
+
+        System.out.println("In Create Post");
         String username = SecurityConfiguration.getUser();
+        System.out.println("username: " + username);
         List<PollOptions> options = fetchOptions(optionString);
         List<String> categories = fetchCategories(categoriesString);
         Polls poll = new Polls(
@@ -52,12 +72,20 @@ public class PostResource {
                 categories
         );
         pollsRepository.insert(poll);
+        return new ResponseEntity<String>("Created Post", responseHeaders, HttpStatus.CREATED);
     }
 
     @GetMapping("/allPolls")
     public List<Polls> getPolls() {
         return pollsRepository.findAll();
     }
+
+    @GetMapping("/getPoll/{postId}")
+    public Polls getPoll(@PathVariable("postId") String postId) {
+        Polls poll = pollsRepository.findById(new ObjectId(postId)).orElseThrow(() -> new MongoException("No Found"));
+        return poll;
+    }
+
 
     @PostMapping("/makeComment/{postId}")
     public Polls makeComment(@RequestParam("comment") String comment, @PathVariable("postId") String postId) {
@@ -68,6 +96,7 @@ public class PostResource {
         pollsRepository.save(poll);
         return poll;
     }
+
 
     @GetMapping("/upvote/{postId}")
     public Polls upvote(@PathVariable("postId") String postId) {
@@ -91,6 +120,7 @@ public class PostResource {
 
     public Polls findIfUserAlreadyChooseAnOption(Polls poll, String optionName, String optionId){
         List<PollOptionChoosen> optionVotedList = poll.getOptionChoosen();
+        List<PollOptions> optionList = poll.getOptions();
         String currentUser = SecurityConfiguration.getUser();
         boolean isValidOption = false;
 
@@ -104,10 +134,22 @@ public class PostResource {
         }
         for(int i = 0; i<optionVotedList.size(); i++ ){
             if(optionVotedList.get(i).getUsername().equals(currentUser)){
-                List<PollOptions> pollOptions = poll.getOptions();
+                for (PollOptions options : optionList) {
+                    if (options.optionName.equals(optionVotedList.get(i).getOptionName())) {
+                        options.votes--;
+                        break;
+                    }
+                }
                 optionVotedList.get(i).setOptionName(optionName);
                 optionVotedList.get(i).setOptionId(optionId);
+                for (PollOptions pollOptions : optionList) {
+                    if (pollOptions.optionName.equals(optionVotedList.get(i).getOptionName())) {
+                        pollOptions.votes++;
+                        break;
+                    }
+                }
                 poll.setOptionChoosen(optionVotedList);
+                poll.setOptions(optionList);
                 pollsRepository.save(poll);
                 return poll;
             }
@@ -115,6 +157,12 @@ public class PostResource {
 
         optionVotedList.add(new PollOptionChoosen(currentUser,optionName,optionId));
         poll.setOptionChoosen(optionVotedList);
+        for (PollOptions pollOptions : optionList) {
+            if (pollOptions.optionName.equals(optionName)) {
+                pollOptions.votes++;
+                break;
+            }
+        }
         pollsRepository.save(poll);
         return poll;
 

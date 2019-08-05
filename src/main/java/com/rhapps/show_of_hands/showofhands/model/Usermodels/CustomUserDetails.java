@@ -1,6 +1,7 @@
 package com.rhapps.show_of_hands.showofhands.model.Usermodels;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -10,11 +11,18 @@ public class CustomUserDetails extends Users implements UserDetails {
     public CustomUserDetails(Users users) {
         super(users);
     }
+//
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        return null;
+//    }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return  AuthorityUtils.createAuthorityList("ROLE_USER", "ROLE_ADMIN");
     }
+
 
     @Override
     public String getPassword() {
