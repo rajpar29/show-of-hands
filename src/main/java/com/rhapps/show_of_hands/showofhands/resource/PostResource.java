@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,9 +76,20 @@ public class PostResource {
         return new ResponseEntity<String>("Created Post", responseHeaders, HttpStatus.CREATED);
     }
 
-    @GetMapping("/allPolls")
-    public List<Polls> getPolls() {
-        return pollsRepository.findAll();
+    @GetMapping("/allPolls/{sort}")
+    public List<Polls> getPolls(@PathVariable("sort") String sort) {
+        if(sort.equals("desc")){
+            return pollsRepository.findAllByOrderByUpvotesDesc();
+        }
+        else if (sort.equals("time")){
+            List pollList =  pollsRepository.findAllByOrderByPollMetaAsc();
+            Collections.reverse(pollList);
+            return pollList;
+        }
+        else{
+            return pollsRepository.findAll();
+        }
+
     }
 
     @GetMapping("/getPoll/{postId}")
@@ -165,10 +177,7 @@ public class PostResource {
         }
         pollsRepository.save(poll);
         return poll;
-
-
     }
-
 
     public Polls findIfUserUpvotedOrDownvoted(Polls poll, boolean isUpvote) {
         List<UpDownVote> upDownVotesList = poll.getUpvoteOrDownvotedBy();

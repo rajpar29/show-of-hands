@@ -14,6 +14,7 @@ public class Polls {
     @Id
     @JsonSerialize(using = ToStringSerializer.class)
     private ObjectId _id;
+    private ObjectId pollMeta;
     private String userId;
     private String title;
     private String description;
@@ -50,6 +51,15 @@ public class Polls {
     public void set_id(ObjectId _id) {
         this._id = _id;
     }
+
+    public ObjectId getPollMeta() {
+        return _id;
+    }
+
+    public void setPollMeta(ObjectId pollMeta) {
+        this.pollMeta = _id;
+    }
+
 
     public String getUserId() {
         return userId;
